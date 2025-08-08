@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Barbie Classy Italiano</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #f8c8dc, #e7a6c4);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 30px;
+      background-color: #ff69b4;
+      color: white;
+      cursor: pointer;
+      margin: 10px;
+    }
+    button:hover {
+      background-color: #ff85c1;
+    }
+    #conversation {
+      width: 80%;
+      max-width: 500px;
+      background: rgba(255,255,255,0.2);
+      padding: 20px;
+      border-radius: 20px;
+      margin-top: 20px;
+      overflow-y: auto;
+      max-height: 300px;
+    }
+    .msg {
+      margin: 10px 0;
+    }
+    .user { text-align: right; }
+    .bot { text-align: left; }
+  </style>
+</head>
+<body>
+  <h1>💬 Barbie Classy Italiano</h1>
+  <button id="startBtn">🎤 Falar</button>
+  <div id="conversation"></div>
+
+  <script>
+    const conversationDiv = document.getElementById("conversation");
+    const startBtn = document.getElementById("startBtn");
+
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "it-IT";
+    recognition.interimResults = false;
+
+    function addMessage(text, sender) {
+      const p = document.createElement("p");
+      p.classList.add("msg", sender);
+      p.textContent = text;
+      conversationDiv.appendChild(p);
+      conversationDiv.scrollTop = conversationDiv.scrollHeight;
+    }
+
+    startBtn.addEventListener("click", () => {
+      recognition.start();
+    });
+
+    recognition.onresult = async (event) => {
+      const transcript = event.results[0][0].transcript;
+      addMessage(transcript, "user");
+
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: transcript })
+      });
+      const data = await res.json();
+
+      addMessage(data.reply, "bot");
+
+      const utterance = new SpeechSynthesisUtterance(data.reply);
+      utterance.lang = "it-IT";
+      speechSynthesis.speak(utterance);
+    };
+  </script>
+</body>
+</html>
